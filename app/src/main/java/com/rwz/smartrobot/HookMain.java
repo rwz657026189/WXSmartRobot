@@ -27,6 +27,9 @@ import okhttp3.Response;
 
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 
+/**
+ * 基于微信v6.6.7版本
+ */
 public class HookMain implements IXposedHookLoadPackage {
 
     private static final String TAG = "TAG";
@@ -134,19 +137,20 @@ public class HookMain implements IXposedHookLoadPackage {
                         }
                         Log.d(TAG, "afterHookedMethod: " + args[0] + "\n" + args[1] + "\n" + args[2]);
                         ContentValues values = (ContentValues) args[2];
-                        if (true) {
+                        if(values == null)
                             return;
-                        }
                         int isSend = (int) values.get("isSend");
                         //说话人ID
                         final String strTalker = values.getAsString("talker");
                         //收到消息，进行回复（要判断不是自己发送的、不是群消息、不是公众号消息，才回复）
-                        if (isSend != 1 && !strTalker.endsWith("@chatroom") && !strTalker.startsWith("gh_")) {
+                        if (strTalker != null && isSend != 1 && !strTalker.endsWith("@chatroom") && !strTalker.startsWith("gh_")) {
                             Object content = values.get("content");
+                            Log.d(TAG, "发送请求" + content);
                             OkHttpManager.getInstance().request(content + "", new Callback() {
                                 @Override
                                 public void onFailure(Call call, IOException e) {
-
+                                    e.printStackTrace();
+                                    replyTextMessage(classLoader, "msg : " + e.getMessage(), strTalker);
                                 }
 
                                 @Override
@@ -178,7 +182,6 @@ public class HookMain implements IXposedHookLoadPackage {
 
             }
         });
-        Log.d(TAG, "HookMain, findAndHookMethod end");
     }
 
 
